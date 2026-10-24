@@ -1,8 +1,5 @@
 # 星露谷自动钓鱼（Stardew Fishing Autofish）
 
-- [English](#English)
-- [中文](#中文)
-
 ## 中文
 
 适用于 **Minecraft 1.20.1 / Forge 47.4.0 / Stardew Fishing 3.7** 的客户端自动钓鱼辅助模组，支持自动抛竿、咬钩收竿、小游戏控制和宝箱优先。
