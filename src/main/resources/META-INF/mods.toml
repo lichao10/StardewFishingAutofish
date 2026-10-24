@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[47,48)"
+license="MIT"
+[[mods]]
+modId="sunlit_autofish"
+version="${mod_version}"
+displayName="星露谷自动钓鱼（Stardew Fishing Autofish）"
+authors="${mod_authors}"
+displayURL="https://github.com/lichao10/lichao10.github.io"
+displayTest="IGNORE_ALL_VERSION"
+description='''Client-side automatic fishing with treasure-first input control for Stardew Fishing 3.7. Toggle with F8 (rebindable).'''
+[[dependencies.sunlit_autofish]]
+modId="forge"
+mandatory=true
+versionRange="[47,48)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.sunlit_autofish]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.sunlit_autofish]]
+modId="stardew_fishing"
+mandatory=true
+versionRange="[3.7]"
+ordering="AFTER"
+side="CLIENT"

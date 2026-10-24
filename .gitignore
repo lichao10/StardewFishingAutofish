@@ -1,0 +1,33 @@
+# Gradle / build / local game files
+.gradle/
+build/
+out/
+bin/
+run/
+runs/
+run-data/
+libs/
+*.log
+*.class
+
+# IDE state
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# Local configuration and credentials
+local.properties
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db

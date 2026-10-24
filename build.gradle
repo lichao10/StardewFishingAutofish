@@ -1,0 +1,83 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148'
+}
+
+group = mod_group_id
+version = mod_version
+base { archivesName = "StardewFishingAutofish-${minecraft_version}-forge" }
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+}
+
+repositories {
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+}
+
+legacyForge {
+    enable {
+        forgeVersion = "${minecraft_version}-${forge_version}"
+        // Binary patches avoid a lengthy game recompilation; IDE APIs stay named.
+        disableRecompilation = true
+    }
+    runs {
+        client { client() }
+    }
+    mods {
+        "${mod_id}" { sourceSet sourceSets.main }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+dependencies {
+    modImplementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('processResources', ProcessResources) {
+    def values = [mod_version: mod_version, mod_authors: mod_authors]
+    inputs.properties values
+    filesMatching('META-INF/mods.toml') { expand values }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+tasks.named('jar', Jar) {
+    from('LICENSE') { into 'META-INF' }
+    from('THIRD_PARTY_NOTICES.md') { into 'META-INF' }
+    manifest.attributes([
+        'Implementation-Title': 'Stardew Fishing Autofish',
+        'Implementation-Version': project.version,
+        'Implementation-Vendor': mod_authors,
+        'MixinConfigs': "${mod_id}.mixins.json"
+    ])
+}
+
+tasks.named('test', Test) { useJUnitPlatform() }
+
+idea.module {
+    downloadSources = true
+    downloadJavadoc = true
+}

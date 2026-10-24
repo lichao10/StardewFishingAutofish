@@ -1,0 +1,10 @@
+{
+  "key.categories.sunlit_autofish": "星露谷自动钓鱼",
+  "key.sunlit_autofish.toggle": "开启 / 关闭自动钓鱼",
+  "message.sunlit_autofish.on": "自动钓鱼：已开启（%s 关闭，可在按键设置中修改）",
+  "message.sunlit_autofish.off": "自动钓鱼：已关闭",
+  "message.sunlit_autofish.need_rod": "自动钓鱼已停止：请手持钓鱼竿",
+  "message.sunlit_autofish.low_durability": "自动钓鱼已停止：鱼竿耐久即将耗尽",
+  "message.sunlit_autofish.error": "自动钓鱼已停止：版本不兼容，详情见日志",
+  "hud.sunlit_autofish.on": "自动钓鱼：开启 [%s]"
+}
