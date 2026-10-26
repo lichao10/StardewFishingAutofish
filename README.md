@@ -1,6 +1,6 @@
 # 星露谷自动钓鱼（Stardew Fishing Autofish）
 
-[Curseforge]([https://www.curseforge.com/minecraft/mc-mods/stardewfishingautofish])
+[Curseforge](https://www.curseforge.com/minecraft/mc-mods/stardewfishingautofish)|[Github](https://github.com/lichao10/StardewFishingAutofish)
 
 ## 中文
 
