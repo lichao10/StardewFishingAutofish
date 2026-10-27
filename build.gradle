@@ -45,7 +45,7 @@ tasks.register('collectArtifacts', Sync) {
     from("common/src/main/resources/assets/${mod_id}/icon.png")
 }
 
-tasks.register('publishLocal', Sync) {
+tasks.register('publishLocal', Copy) {
     group = 'distribution'
     description = 'Copy the release files to releaseDir.'
     dependsOn 'collectArtifacts'
