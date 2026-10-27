@@ -4,7 +4,7 @@ import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.service.MixinService;
 
-/** Runs the actual NeoForge Mixin implementation on the actual 1.21.1 hook class. */
+/** Applies the accessor to the runtime fishing hook class. */
 public class MixinSmokeTest {
     public static void main(String[] args) throws Exception {
         MixinBootstrap.init();

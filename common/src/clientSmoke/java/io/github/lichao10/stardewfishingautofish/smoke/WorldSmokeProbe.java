@@ -13,8 +13,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.world.flag.FeatureFlags;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.item.Items;
@@ -38,7 +36,7 @@ public final class WorldSmokeProbe {
         originalPause = mc.options.pauseOnLostFocus;
         mc.options.pauseOnLostFocus = false;
         var settings = new LevelSettings("Autofish isolated smoke test", GameType.CREATIVE,
-                false, Difficulty.PEACEFUL, true, new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
+                new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true, WorldDataConfiguration.DEFAULT);
         var options = new WorldOptions(20261027L, false, false);
         Function<HolderLookup.Provider, WorldDimensions> dimensions = WorldPresets::createNormalWorldDimensions;
         var flows = mc.createWorldOpenFlows();

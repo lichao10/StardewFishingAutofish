@@ -19,6 +19,8 @@ public class HeadlessMixinService extends MixinServiceAbstract
     public ITransformerProvider getTransformerProvider() { return this; }
     public IClassTracker getClassTracker() { return this; }
     public IMixinAuditTrail getAuditTrail() { return null; }
+    public IFeatureValidator getFeatureValidator() { return IFeatureValidator.ALLOW_ALL; }
+    public IAdviceProvider getAdviceProvider() { return IAdviceProvider.GENERIC; }
     public Collection<String> getPlatformAgents() { return Collections.emptyList(); }
     public IContainerHandle getPrimaryContainer() { return new ContainerHandleVirtual("headless-test"); }
     public InputStream getResourceAsStream(String name) { return getClass().getClassLoader().getResourceAsStream(name); }

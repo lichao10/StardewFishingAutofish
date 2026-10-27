@@ -9,7 +9,7 @@ import com.mojang.logging.LogUtils;
 import java.lang.reflect.Field;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -208,14 +208,14 @@ public final class ClientAutoFish {
     }
 
     private static void message(Minecraft mc, String key, Object... args) {
-        if (mc.player != null) mc.player.displayClientMessage(Component.translatable(key, args), true);
+        if (mc.player != null) mc.player.sendOverlayMessage(Component.translatable(key, args));
     }
 
-    private static void overlay(GuiGraphics graphics) {
+    private static void overlay(GuiGraphicsExtractor graphics) {
         if (!enabled) return;
         Minecraft mc = Minecraft.getInstance();
-        graphics.drawString(mc.font, Component.translatable("hud.stardew_fishing_autofish.on",
-                toggle.getTranslatedKeyMessage()), 6, 6, 0xFF66FF99);
+        graphics.text(mc.font, Component.translatable("hud.stardew_fishing_autofish.on",
+                toggle.getTranslatedKeyMessage()), 6, 6, 0xFF66FF99, false);
     }
 
     @SubscribeEvent
