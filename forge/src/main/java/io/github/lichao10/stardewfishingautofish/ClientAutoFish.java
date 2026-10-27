@@ -25,7 +25,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
-/** Client automation entry point. Minecraft members use official Mojang mappings. */
+/** Client fishing automation. */
 @Mod.EventBusSubscriber(modid = StardewFishingAutofish.ID, value = Dist.CLIENT)
 public final class ClientAutoFish {
     private static KeyMapping toggle;
@@ -52,7 +52,7 @@ public final class ClientAutoFish {
 
     @SubscribeEvent
     public static void key(InputEvent.Key event) {
-        Minecraft mc = Minecraft.getInstance(); // getInstance
+        Minecraft mc = Minecraft.getInstance();
         if (mc.screen == null && event.getAction() == GLFW.GLFW_PRESS
                 && toggle != null && toggle.matches(event.getKey(), event.getScanCode())) {
             toggle(mc);
@@ -79,7 +79,7 @@ public final class ClientAutoFish {
         try {
             initializeFields();
             savedPauseOnLostFocus = mc.options.pauseOnLostFocus;
-            mc.options.pauseOnLostFocus = false; // pauseOnLostFocus: restore when automation stops
+            mc.options.pauseOnLostFocus = false;
             enabled = true;
             cooldown = 10;
             observedHook = null;
@@ -99,7 +99,7 @@ public final class ClientAutoFish {
             stop(mc, null);
             return;
         }
-        if (!mc.player.isAlive() || mc.player.isSpectator()) { // alive / spectator
+        if (!mc.player.isAlive() || mc.player.isSpectator()) {
             stop(mc, "message.stardew_fishing_autofish.off");
             return;
         }
@@ -123,7 +123,7 @@ public final class ClientAutoFish {
                 return;
             }
             releaseInput();
-            // Opening another GUI pauses automation. No OS mouse/key state is changed.
+            // Pause while another screen is open.
             if (mc.screen != null || mc.isPaused()) return;
             if (cooldown > 0) { cooldown--; return; }
             InteractionHand hand = ItemUtils.getRodHand(mc.player);
@@ -134,7 +134,7 @@ public final class ClientAutoFish {
                 return;
             }
             FishingHook hook = mc.player.fishing;
-            // Never act on another player's bobber if a mod leaves a stale reference.
+            // Ignore stale references to another player's bobber.
             if (hook != null && hook.getPlayerOwner() != mc.player) return;
             if (hook != observedHook) {
                 observedHook = hook;
@@ -156,7 +156,7 @@ public final class ClientAutoFish {
     }
 
     private static void useRod(Minecraft mc, InteractionHand hand) {
-        // Vanilla item use with its regular packet; SF handles rewards and completion itself.
+        // Use the rod through the vanilla interaction API.
         mc.gameMode.useItem(mc.player, hand);
         mc.player.swing(hand);
     }
