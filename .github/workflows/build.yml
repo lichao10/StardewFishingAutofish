@@ -1,23 +1,61 @@
-name: Build
+name: Build all supported targets
 on:
   push:
+    branches: ['**']
+    tags: ['v*-mc*-forge', 'v*-mc*-neoforge']
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  build:
+  targets:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        name: Select targets and validate release tag
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          targets = json.loads(Path('targets.json').read_text())
+          props = dict(line.split('=', 1) for line in Path('gradle.properties').read_text().splitlines()
+                       if '=' in line and not line.lstrip().startswith('#'))
+          if os.environ['GITHUB_REF_TYPE'] == 'tag':
+              tag = os.environ['GITHUB_REF_NAME']
+              targets = [t for t in targets if tag == f"v{props['mod_version']}-mc{t['minecraft_version']}-{t['loader']}"]
+              if len(targets) != 1:
+                  raise SystemExit('Release tag does not match a supported target and mod_version')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('matrix=' + json.dumps({'include': targets}) + '\n')
+  build:
+    needs: targets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.targets.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: |
+            17
+            21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build and test
-        run: sh gradlew build --no-daemon
+      - name: Build and test selected target
+        run: sh gradlew build collectArtifacts -Ptarget=${{ matrix.id }} --no-daemon
+      - name: Check release tag against Gradle properties
+        if: github.ref_type == 'tag'
+        run: sh gradlew verifyReleaseTag -Ptarget=${{ matrix.id }} -PreleaseTag=${{ github.ref_name }} --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: StardewFishingAutofish-1.20.1-Forge
-          path: build/libs/*.jar
+          name: StardewFishingAutofish-${{ matrix.id }}
+          path: |
+            build/releases/
+            ${{ matrix.directory }}/build/simulation/treasure-1000.csv*
+            ${{ matrix.directory }}/build/reports/tests/
+            common/build/reports/tests/
           if-no-files-found: error

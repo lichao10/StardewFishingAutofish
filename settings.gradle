@@ -8,3 +8,14 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 rootProject.name = 'StardewFishingAutofish'
+
+def targets = new groovy.json.JsonSlurper().parse(file('targets.json'))
+def selected = providers.gradleProperty('target').orNull
+if (selected != null && !targets.any { it.id == selected }) {
+    throw new GradleException("Unknown target '${selected}'. Choose: ${targets*.id.join(', ')}")
+}
+include 'common'
+targets.findAll { selected == null || it.id == selected }.each { target ->
+    include target.project
+    project(":${target.project}").projectDir = file(target.directory)
+}

@@ -1,0 +1,27 @@
+plugins { id 'java-library' }
+java { toolchain.languageVersion = JavaLanguageVersion.of(17) }
+repositories { mavenCentral() }
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+def identity = layout.buildDirectory.dir('generated/sources/identity')
+sourceSets.main.java.srcDir(identity)
+tasks.register('generateModIdentity') {
+    inputs.property('mod_id', rootProject.mod_id)
+    outputs.dir(identity)
+    doLast {
+        def dest = identity.get().file('io/github/lichao10/stardewfishingautofish/ModIdentity.java').asFile
+        dest.parentFile.mkdirs()
+        dest.text = """package io.github.lichao10.stardewfishingautofish;
+public final class ModIdentity {
+    public static final String ID = "${rootProject.mod_id}";
+    private ModIdentity() {}
+}
+"""
+    }
+}
+tasks.named('compileJava') { dependsOn 'generateModIdentity' }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 17 }
+tasks.named('test') { useJUnitPlatform() }

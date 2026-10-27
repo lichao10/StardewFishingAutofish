@@ -1,0 +1,37 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+project.pluginManager.apply('multiloader-client-smoke')
+neoForge {
+    version = loader_version
+    runs {
+        client {
+            client(); gameDirectory = file('run/client')
+            if (providers.gradleProperty('clientSmokeWorld').isPresent()) systemProperty 'autofish.smoke.world', 'true'
+        }
+    }
+    mods {
+        "${mod_id}" { sourceSet sourceSets.main }
+        if (providers.gradleProperty('clientSmoke').isPresent()) {
+            autofish_smoke { sourceSet sourceSets.clientSmoke }
+        }
+    }
+}
+dependencies { implementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}" }
+sourceSets {
+    mixinTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+tasks.register('mixinSmokeTest', JavaExec) {
+    group = 'verification'
+    dependsOn 'mixinTestClasses', 'jar'
+    classpath = files(sourceSets.mixinTest.output, tasks.named('jar').flatMap { it.archiveFile },
+            sourceSets.main.runtimeClasspath - sourceSets.main.output)
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
+    systemProperty 'mixin.service', 'HeadlessMixinService'
+    mainClass = 'MixinSmokeTest'
+}
+tasks.named('check') { dependsOn 'mixinSmokeTest' }

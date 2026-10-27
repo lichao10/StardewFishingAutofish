@@ -1,0 +1,10 @@
+{
+  "key.categories.stardewfishingautofish": "Stardew Fishing Autofish",
+  "key.stardewfishingautofish.toggle": "Toggle automatic fishing",
+  "message.stardewfishingautofish.on": "AutoFish enabled (%s to stop; rebind in Controls)",
+  "message.stardewfishingautofish.off": "AutoFish disabled",
+  "message.stardewfishingautofish.need_rod": "AutoFish stopped: hold a fishing rod",
+  "message.stardewfishingautofish.low_durability": "AutoFish stopped: fishing rod is nearly broken",
+  "message.stardewfishingautofish.error": "AutoFish stopped: incompatible version; see log",
+  "hud.stardewfishingautofish.on": "AutoFish: ON [%s]"
+}
