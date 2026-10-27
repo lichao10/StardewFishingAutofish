@@ -14,7 +14,6 @@ ext.expandProps = [
     mod_name: mod_name,
     mod_author: mod_author,
     license: providers.gradleProperty('license').get(),
-    credits: providers.gradleProperty('credits').get(),
     description: providers.gradleProperty('description').get(),
     java_version: providers.gradleProperty('java_version').get(),
     gradle_java_version: providers.gradleProperty('gradle_java_version').get()
