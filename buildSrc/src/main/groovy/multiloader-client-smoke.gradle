@@ -1,0 +1,9 @@
+// Optional real-client checks. No probe classes/resources enter production source sets.
+sourceSets {
+    clientSmoke {
+        java.srcDir rootProject.file('common/src/clientSmoke/java')
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+tasks.named('compileClientSmokeJava') { dependsOn 'classes' }

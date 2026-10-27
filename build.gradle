@@ -1,83 +1,87 @@
 plugins {
-    id 'java-library'
-    id 'idea'
-    id 'net.neoforged.moddev.legacyforge' version '2.0.148'
+    id 'base'
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
 }
+group = providers.gradleProperty('group').get()
+version = providers.gradleProperty('version').get()
 
-group = mod_group_id
-version = mod_version
-base { archivesName = "StardewFishingAutofish-${minecraft_version}-forge" }
-
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    withSourcesJar()
-}
-
-repositories {
-    maven {
-        name = 'Modrinth'
-        url = 'https://api.modrinth.com/maven'
-        content { includeGroup 'maven.modrinth' }
+// Shared mod metadata. Target-specific values are added by the loader convention.
+ext.expandProps = [
+    version: project.version.toString(),
+    group: project.group.toString(),
+    mod_id: mod_id,
+    mod_name: mod_name,
+    mod_author: mod_author,
+    license: providers.gradleProperty('license').get(),
+    description: providers.gradleProperty('description').get(),
+    java_version: providers.gradleProperty('java_version').get(),
+    gradle_java_version: providers.gradleProperty('gradle_java_version').get()
+]
+def targets = new groovy.json.JsonSlurper().parse(file('targets.json'))
+ext.targetMatrix = targets
+if (!(mod_id ==~ /[a-z][a-z0-9_]{1,63}/)) throw new GradleException('Invalid mod_id')
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
+    if (name != 'common') {
+        def selected = providers.gradleProperty('target').orNull
+        def target = targets.find { it.project == name && (selected != null ? it.id == selected : it.default) }
+        if (target == null) throw new GradleException("Unregistered target: ${name}")
+        ext.targetSpec = target
+        if (name == 'neoforge') layout.buildDirectory = file("build/${target.minecraft_version}")
+        target.findAll { key, value -> !(key in ['id', 'project', 'directory']) }.each { key, value ->
+            extensions.extraProperties.set(key, value)
+        }
     }
 }
-
-legacyForge {
-    enable {
-        forgeVersion = "${minecraft_version}-${forge_version}"
-        // Binary patches avoid a lengthy game recompilation; IDE APIs stay named.
-        disableRecompilation = true
+tasks.register('verifyReleaseTag') {
+    group = 'verification'
+    description = 'Check -PreleaseTag=v<VERSION>-mc<MC>-<LOADER> against -Ptarget.'
+    doLast {
+        def tag = providers.gradleProperty('releaseTag').orNull
+        def selected = providers.gradleProperty('target').orNull
+        if (!tag || !selected) throw new GradleException('Pass both -PreleaseTag and -Ptarget')
+        def target = targets.find { it.id == selected }
+        if (!target || tag != "v${rootProject.version}-mc${target.minecraft_version}-${target.loader}") {
+            throw new GradleException("Release tag disagrees with version/target: ${tag}")
+        }
     }
-    runs {
-        client { client() }
+}
+tasks.register('collectArtifacts', Sync) {
+    group = 'distribution'
+    description = 'Collect verified install JARs under forge/ and neoforge/, with icon.png.'
+    dependsOn subprojects.collect { it.tasks.named('build') }
+    into layout.buildDirectory.dir('releases')
+    subprojects.findAll { it.name != 'common' }.each { p ->
+        from(p.layout.buildDirectory.file("libs/StardewFishingAutofish-${p.minecraft_version}-${p.loader}-${p.version}.jar")) { into p.loader }
     }
-    mods {
-        "${mod_id}" { sourceSet sourceSets.main }
+    from("common/src/main/resources/assets/${mod_id}/icon.png")
+}
+
+tasks.register('publishLocal', Sync) {
+    group = 'distribution'
+    description = 'Publish only forge/, neoforge/ and icon.png to the configured releaseDir.'
+    dependsOn 'collectArtifacts'
+    def local = new Properties()
+    def configFile = file('local.properties')
+    if (configFile.exists()) configFile.withInputStream { local.load(it) }
+    def configured = providers.gradleProperty('releaseDir').orElse(local.getProperty('releaseDir', ''))
+    def destination = configured.map { value ->
+        if (!value) throw new GradleException('Set releaseDir in local.properties or pass -PreleaseDir=<folder>')
+        def output = file(value).canonicalFile
+        def workspace = rootProject.projectDir.canonicalFile.toPath()
+        if (output.toPath().nameCount < 2 || workspace.startsWith(output.toPath()) ||
+                output.toPath().startsWith(workspace)) {
+            throw new GradleException('releaseDir must be a dedicated folder outside the source workspace')
+        }
+        output
     }
+    from layout.buildDirectory.dir('releases')
+    into destination
+    doLast { logger.lifecycle("Published install JARs and icon: ${destinationDir}") }
 }
 
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
-}
-
-dependencies {
-    modImplementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}"
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    testImplementation platform('org.junit:junit-bom:5.11.4')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.named('processResources', ProcessResources) {
-    def values = [mod_version: mod_version, mod_authors: mod_authors]
-    inputs.properties values
-    filesMatching('META-INF/mods.toml') { expand values }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-    options.release = 17
-}
-
-tasks.withType(AbstractArchiveTask).configureEach {
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
-}
-
-tasks.named('jar', Jar) {
-    from('LICENSE') { into 'META-INF' }
-    from('THIRD_PARTY_NOTICES.md') { into 'META-INF' }
-    manifest.attributes([
-        'Implementation-Title': 'Stardew Fishing Autofish',
-        'Implementation-Version': project.version,
-        'Implementation-Vendor': mod_authors,
-        'MixinConfigs': "${mod_id}.mixins.json"
-    ])
-}
-
-tasks.named('test', Test) { useJUnitPlatform() }
-
-idea.module {
-    downloadSources = true
-    downloadJavadoc = true
-}
+tasks.named('check') { dependsOn subprojects.collect { it.tasks.named('check') } }
+tasks.named('assemble') { dependsOn subprojects.collect { it.tasks.named('assemble') } }
+tasks.named('clean') { dependsOn subprojects.collect { it.tasks.named('clean') } }
