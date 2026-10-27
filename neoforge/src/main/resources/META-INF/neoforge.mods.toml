@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[4,)"
+loaderVersion="${neoforge_loader_version_range}"
 license="${license}"
 issueTrackerURL="https://github.com/lichao10/StardewFishingAutofish/issues"
 [[mods]]
@@ -15,13 +15,13 @@ config="${mod_id}.mixins.json"
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"
-versionRange="[${loader_version},21.2)"
+versionRange="[${neoforge_version},21.2)"
 ordering="NONE"
 side="CLIENT"
 [[dependencies.${mod_id}]]
 modId="minecraft"
 type="required"
-versionRange="[${minecraft_version}]"
+versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="CLIENT"
 [[dependencies.${mod_id}]]

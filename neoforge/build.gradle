@@ -1,74 +1,40 @@
-plugins { id 'multiloader-loader' }
-
-def legacy = api == 'forge'
-project.pluginManager.apply(legacy ? 'net.neoforged.moddev.legacyforge' : 'net.neoforged.moddev')
-project.pluginManager.apply('multiloader-client-smoke')
-
-if (legacy) {
-    // NeoForge 1.20.1 still uses net.minecraftforge APIs and META-INF/mods.toml.
-    def commonJava = rootProject.file('common/src/main/java')
-    def identity = project(':common').layout.buildDirectory.dir('generated/sources/identity')
-    sourceSets.main.java.setSrcDirs([rootProject.file('forge/src/main/java'), file('src/legacy/java'), commonJava, identity])
-    sourceSets.main.resources.setSrcDirs([file('src/legacy/resources'), rootProject.file('common/src/main/resources')])
-    sourceSets.biteTest.java.setSrcDirs([rootProject.file('forge/src/biteTest/java')])
-    sourceSets.simulation.java.setSrcDirs([rootProject.file('forge/src/simulation/java'), rootProject.file('common/src/simulation/java')])
-    sourceSets.clientSmoke.java.setSrcDirs([rootProject.file('forge/src/clientSmoke/java'), rootProject.file('common/src/clientSmoke/java')])
-    sourceSets.clientSmoke.resources.setSrcDirs([rootProject.file('forge/src/clientSmoke/resources')])
-    legacyForge {
-        enable {
-            neoForgeVersion = "${minecraft_version}-${loader_version}"
-            disableRecompilation = true
-        }
-        runs {
-            client {
-                client(); gameDirectory = file("run/${minecraft_version}/client")
-                systemProperty 'autofish.smoke.target', 'NeoForge 1.20.1'
-                if (providers.gradleProperty('clientSmokeWorld').isPresent()) systemProperty 'autofish.smoke.world', 'true'
-            }
-        }
-        mods {
-            "${mod_id}" { sourceSet sourceSets.main }
-            if (providers.gradleProperty('clientSmoke').isPresent()) autofish_smoke { sourceSet sourceSets.clientSmoke }
-        }
-    }
-    mixin {
-        add sourceSets.main, "${mod_id}.refmap.json"
-        config "${mod_id}.mixins.json"
-    }
-    dependencies {
-        modImplementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}"
-        annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    }
-    tasks.named('jar', Jar) { manifest.attributes('MixinConfigs': "${mod_id}.mixins.json") }
-} else {
-    neoForge {
-        version = loader_version
-        runs {
-            client {
-                client(); gameDirectory = file("run/${minecraft_version}/client")
-                if (providers.gradleProperty('clientSmokeWorld').isPresent()) systemProperty 'autofish.smoke.world', 'true'
-            }
-        }
-        mods {
-            "${mod_id}" { sourceSet sourceSets.main }
-            if (providers.gradleProperty('clientSmoke').isPresent()) autofish_smoke { sourceSet sourceSets.clientSmoke }
-        }
-    }
-    dependencies { implementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}" }
-    sourceSets {
-        mixinTest {
-            compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-            runtimeClasspath += sourceSets.main.runtimeClasspath
-        }
-    }
-    tasks.register('mixinSmokeTest', JavaExec) {
-        group = 'verification'
-        dependsOn 'mixinTestClasses', 'jar'
-        classpath = files(sourceSets.mixinTest.output, tasks.named('jar').flatMap { it.archiveFile },
-                sourceSets.main.runtimeClasspath - sourceSets.main.output)
-        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
-        systemProperty 'mixin.service', 'HeadlessMixinService'
-        mainClass = 'MixinSmokeTest'
-    }
-    tasks.named('check') { dependsOn 'mixinSmokeTest' }
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+    id 'multiloader-client-smoke'
 }
+
+neoForge {
+    version = neoforge_version
+    runs {
+        client {
+            client(); gameDirectory = file('run/client')
+            if (providers.gradleProperty('clientSmokeWorld').isPresent()) systemProperty 'autofish.smoke.world', 'true'
+        }
+    }
+    mods {
+        "${mod_id}" { sourceSet sourceSets.main }
+        if (providers.gradleProperty('clientSmoke').isPresent()) autofish_smoke { sourceSet sourceSets.clientSmoke }
+    }
+}
+
+dependencies { implementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}" }
+
+sourceSets {
+    mixinTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+tasks.register('mixinSmokeTest', JavaExec) {
+    group = 'verification'
+    dependsOn 'mixinTestClasses', 'jar'
+    classpath = files(sourceSets.mixinTest.output, tasks.named('jar').flatMap { it.archiveFile },
+            sourceSets.main.runtimeClasspath - sourceSets.main.output)
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
+    systemProperty 'mixin.service', 'HeadlessMixinService'
+    mainClass = 'MixinSmokeTest'
+}
+
+tasks.named('check') { dependsOn 'mixinSmokeTest' }

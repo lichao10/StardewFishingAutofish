@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.resources.ResourceLocation;
 
-/** Runs inside a real rendered client, never in a production JAR. */
+/** Client startup checks. */
 public final class ClientSmokeProbe {
     private static int titleTicks;
     private static boolean finished;

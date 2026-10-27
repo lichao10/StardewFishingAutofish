@@ -1,4 +1,4 @@
-// Optional real-client checks. No probe classes/resources enter production source sets.
+// Client integration tests.
 sourceSets {
     clientSmoke {
         java.srcDir rootProject.file('common/src/clientSmoke/java')

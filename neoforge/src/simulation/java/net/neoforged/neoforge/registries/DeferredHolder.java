@@ -1,5 +1,5 @@
 package net.neoforged.neoforge.registries;
-/** Test-only holder for muted audio; never shipped in the mod JAR. */
+/** Muted sound holder for simulation tests. */
 public class DeferredHolder<R, T extends R> {
     public T get() { return null; }
 }
