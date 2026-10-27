@@ -13,7 +13,7 @@ public final class ClientSmokeMod {
     public static final class Events {
         @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
-                ClientSmokeProbe.tick(ModList.get().isLoaded(StardewFishingAutofish.ID), "Forge 1.20.1");
+                ClientSmokeProbe.tick(ModList.get().isLoaded(StardewFishingAutofish.ID), System.getProperty("autofish.smoke.target", "Forge 1.20.1"));
             }
         }
     }

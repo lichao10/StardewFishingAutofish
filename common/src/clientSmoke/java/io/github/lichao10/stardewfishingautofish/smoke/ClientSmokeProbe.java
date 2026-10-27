@@ -27,15 +27,15 @@ public final class ClientSmokeProbe {
         if (finished || !(mc.screen instanceof TitleScreen) || ++titleTicks < 20) return;
         finished = true;
         try {
-            if (!registered || !StardewFishingAutofish.ID.equals("stardewfishingautofish")) {
+            if (!registered || !StardewFishingAutofish.ID.equals("stardew_fishing_autofish")) {
                 throw new AssertionError("Runtime mod registration/identity mismatch");
             }
             var key = Arrays.stream(mc.options.keyMappings)
-                    .filter(k -> k.getName().equals("key.stardewfishingautofish.toggle"))
+                    .filter(k -> k.getName().equals("key.stardew_fishing_autofish.toggle"))
                     .findFirst().orElseThrow(() -> new AssertionError("Toggle key not registered"));
             if (!key.getKey().getName().equals("key.keyboard.f8")) throw new AssertionError("Unexpected default key");
             var resource = mc.getResourceManager().getResource(
-                    ResourceLocation.tryParse("stardewfishingautofish:icon.png"))
+                    ResourceLocation.tryParse("stardew_fishing_autofish:icon.png"))
                     .orElseThrow(() -> new AssertionError("Icon not available in active game resource manager"));
             try (var input = resource.open()) {
                 byte[] png = input.readAllBytes();

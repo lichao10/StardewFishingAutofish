@@ -3,8 +3,22 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.148' apply false
     id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
 }
-group = mod_group_id
-version = mod_version
+group = providers.gradleProperty('group').get()
+version = providers.gradleProperty('version').get()
+
+// Shared mod metadata. Target-specific values are added by the loader convention.
+ext.expandProps = [
+    version: project.version.toString(),
+    group: project.group.toString(),
+    mod_id: mod_id,
+    mod_name: mod_name,
+    mod_author: mod_author,
+    license: providers.gradleProperty('license').get(),
+    credits: providers.gradleProperty('credits').get(),
+    description: providers.gradleProperty('description').get(),
+    java_version: providers.gradleProperty('java_version').get(),
+    gradle_java_version: providers.gradleProperty('gradle_java_version').get()
+]
 def targets = new groovy.json.JsonSlurper().parse(file('targets.json'))
 ext.targetMatrix = targets
 if (!(mod_id ==~ /[a-z][a-z0-9_]{1,63}/)) throw new GradleException('Invalid mod_id')
@@ -12,9 +26,11 @@ subprojects {
     group = rootProject.group
     version = rootProject.version
     if (name != 'common') {
-        def target = targets.find { it.project == name }
+        def selected = providers.gradleProperty('target').orNull
+        def target = targets.find { it.project == name && (selected != null ? it.id == selected : it.default) }
         if (target == null) throw new GradleException("Unregistered target: ${name}")
         ext.targetSpec = target
+        if (name == 'neoforge') layout.buildDirectory = file("build/${target.minecraft_version}")
         target.findAll { key, value -> !(key in ['id', 'project', 'directory']) }.each { key, value ->
             extensions.extraProperties.set(key, value)
         }
@@ -28,74 +44,45 @@ tasks.register('verifyReleaseTag') {
         def selected = providers.gradleProperty('target').orNull
         if (!tag || !selected) throw new GradleException('Pass both -PreleaseTag and -Ptarget')
         def target = targets.find { it.id == selected }
-        if (!target || tag != "v${mod_version}-mc${target.minecraft_version}-${target.loader}") {
+        if (!target || tag != "v${rootProject.version}-mc${target.minecraft_version}-${target.loader}") {
             throw new GradleException("Release tag disagrees with version/target: ${tag}")
         }
     }
 }
 tasks.register('collectArtifacts', Sync) {
     group = 'distribution'
-    description = 'Collect verified install JARs, sources and SHA-256 checksums.'
+    description = 'Collect verified install JARs under forge/ and neoforge/, with icon.png.'
     dependsOn subprojects.collect { it.tasks.named('build') }
     into layout.buildDirectory.dir('releases')
     subprojects.findAll { it.name != 'common' }.each { p ->
-        from(p.layout.buildDirectory.dir('libs')) { include '*.jar'; into p.targetSpec.id }
+        from(p.layout.buildDirectory.file("libs/StardewFishingAutofish-${p.minecraft_version}-${p.loader}-${p.version}.jar")) { into p.loader }
     }
-    doLast {
-        def sums = fileTree(destinationDir).matching { include '**/*.jar' }.files.sort().collect { jar ->
-            def hash = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes))
-            "${hash}  ${destinationDir.toPath().relativize(jar.toPath()).toString().replace('\\', '/')}"
-        }
-        new File(destinationDir, 'SHA256SUMS.txt').text = sums.join('\n') + '\n'
-    }
+    from("common/src/main/resources/assets/${mod_id}/icon.png")
 }
 
-tasks.register('publishLocal') {
+tasks.register('publishLocal', Sync) {
     group = 'distribution'
-    description = 'Copy verified artifacts to releaseDir/<mod_version> (configured in local.properties or -PreleaseDir).'
+    description = 'Publish only forge/, neoforge/ and icon.png to the configured releaseDir.'
     dependsOn 'collectArtifacts'
-    doLast {
-        def local = new Properties()
-        def localFile = file('local.properties')
-        if (localFile.exists()) localFile.withInputStream { local.load(it) }
-        def configured = providers.gradleProperty('releaseDir').orElse(local.getProperty('releaseDir', '')).get()
-        if (!configured) throw new GradleException('Set releaseDir in local.properties or pass -PreleaseDir=<folder>')
-        def output = new File(configured, mod_version.toString()).canonicalFile
-        copy { from layout.buildDirectory.dir('releases'); into output }
-        copy {
-            from('CHANGELOG.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md')
-            into output
+    def local = new Properties()
+    def configFile = file('local.properties')
+    if (configFile.exists()) configFile.withInputStream { local.load(it) }
+    def configured = providers.gradleProperty('releaseDir').orElse(local.getProperty('releaseDir', ''))
+    def destination = configured.map { value ->
+        if (!value) throw new GradleException('Set releaseDir in local.properties or pass -PreleaseDir=<folder>')
+        def output = file(value).canonicalFile
+        def workspace = rootProject.projectDir.canonicalFile.toPath()
+        if (output.toPath().nameCount < 2 || workspace.startsWith(output.toPath()) ||
+                output.toPath().startsWith(workspace)) {
+            throw new GradleException('releaseDir must be a dedicated folder outside the source workspace')
         }
-        copy {
-            from('README.md') {
-                filter { line -> line.replace("common/src/main/resources/assets/${mod_id}/icon.png", 'icon.png') }
-            }
-            into output
-        }
-        copy { from 'docs'; into new File(output, 'docs') }
-        copy {
-            from "common/src/main/resources/assets/${mod_id}/icon.png"
-            into output
-        }
-        subprojects.findAll { it.name != 'common' }.each { p ->
-            copy {
-                from(p.file('run/client')) { include 'client-smoke-result.txt', 'world-smoke-result.txt' }
-                from(p.layout.buildDirectory.dir('simulation')) { include '*.summary.txt' }
-                into new File(output, "validation/${p.targetSpec.id}")
-            }
-        }
-        def files = fileTree(output).files.findAll { it.name != 'release-manifest.json' }.sort().collect { artifact ->
-            [path: output.toPath().relativize(artifact.toPath()).toString().replace('\\', '/'),
-             sha256: java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes))]
-        }
-        new File(output, 'release-manifest.json').text = groovy.json.JsonOutput.prettyPrint(
-                groovy.json.JsonOutput.toJson([mod_id: mod_id, version: mod_version,
-                        targets: subprojects.findAll { it.name != 'common' }.collect { it.targetSpec.id }, files: files])) + '\n'
-        def index = new File(output.parentFile, 'README.txt')
-        if (!index.exists()) index.setText('Stardew Fishing Autofish 本机发布目录\n\n各版本按版本号分文件夹；进入相应版本后，选择与 Minecraft 和加载器匹配的目录。\n安装不带 -sources 的 JAR，升级时先移除旧辅助模组。\n图标和校验文件随各版本保存。\n', 'UTF-8')
-        logger.lifecycle("Local release folder: ${output}")
+        output
     }
+    from layout.buildDirectory.dir('releases')
+    into destination
+    doLast { logger.lifecycle("Published install JARs and icon: ${destinationDir}") }
 }
+
 tasks.named('check') { dependsOn subprojects.collect { it.tasks.named('check') } }
 tasks.named('assemble') { dependsOn subprojects.collect { it.tasks.named('assemble') } }
 tasks.named('clean') { dependsOn subprojects.collect { it.tasks.named('clean') } }

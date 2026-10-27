@@ -25,9 +25,9 @@ jobs:
                        if '=' in line and not line.lstrip().startswith('#'))
           if os.environ['GITHUB_REF_TYPE'] == 'tag':
               tag = os.environ['GITHUB_REF_NAME']
-              targets = [t for t in targets if tag == f"v{props['mod_version']}-mc{t['minecraft_version']}-{t['loader']}"]
+              targets = [t for t in targets if tag == f"v{props['version']}-mc{t['minecraft_version']}-{t['loader']}"]
               if len(targets) != 1:
-                  raise SystemExit('Release tag does not match a supported target and mod_version')
+                  raise SystemExit('Release tag does not match a supported target and version')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write('matrix=' + json.dumps({'include': targets}) + '\n')
   build:
@@ -53,9 +53,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: StardewFishingAutofish-${{ matrix.id }}
-          path: |
-            build/releases/
-            ${{ matrix.directory }}/build/simulation/treasure-1000.csv*
-            ${{ matrix.directory }}/build/reports/tests/
-            common/build/reports/tests/
+          path: build/releases/
           if-no-files-found: error

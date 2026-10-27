@@ -1,15 +1,15 @@
 modLoader="javafml"
 loaderVersion="[4,)"
-license="MIT"
+license="${license}"
 issueTrackerURL="https://github.com/lichao10/StardewFishingAutofish/issues"
 [[mods]]
 modId="${mod_id}"
-version="${mod_version}"
-displayName="星露谷自动钓鱼（Stardew Fishing Autofish）"
+version="${version}"
+displayName="星露谷自动钓鱼（${mod_name}）"
 logoFile="assets/${mod_id}/icon.png"
-authors="${mod_authors}"
+authors="${mod_author}"
 displayURL="https://github.com/lichao10/StardewFishingAutofish"
-description='''Client-only automatic fishing with treasure-first control for Stardew Fishing 3.7 on Minecraft 1.21.1 NeoForge. Toggle F8.'''
+description='''${description}'''
 [[mixins]]
 config="${mod_id}.mixins.json"
 [[dependencies.${mod_id}]]

@@ -1,5 +1,5 @@
 plugins { id 'java-library' }
-java { toolchain.languageVersion = JavaLanguageVersion.of(17) }
+java { toolchain.languageVersion = JavaLanguageVersion.of(rootProject.java_version.toInteger()) }
 repositories { mavenCentral() }
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.11.4')
@@ -23,5 +23,5 @@ public final class ModIdentity {
     }
 }
 tasks.named('compileJava') { dependsOn 'generateModIdentity' }
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 17 }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = rootProject.java_version.toInteger() }
 tasks.named('test') { useJUnitPlatform() }

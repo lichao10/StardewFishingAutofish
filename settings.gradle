@@ -15,7 +15,7 @@ if (selected != null && !targets.any { it.id == selected }) {
     throw new GradleException("Unknown target '${selected}'. Choose: ${targets*.id.join(', ')}")
 }
 include 'common'
-targets.findAll { selected == null || it.id == selected }.each { target ->
+targets.findAll { selected == null ? it.default : it.id == selected }.each { target ->
     include target.project
     project(":${target.project}").projectDir = file(target.directory)
 }

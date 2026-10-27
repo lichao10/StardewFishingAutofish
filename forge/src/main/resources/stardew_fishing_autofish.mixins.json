@@ -9,5 +9,5 @@
   "injectors": {
     "defaultRequire": 1
   },
-  "refmap": "stardewfishingautofish.refmap.json"
+  "refmap": "stardew_fishing_autofish.refmap.json"
 }

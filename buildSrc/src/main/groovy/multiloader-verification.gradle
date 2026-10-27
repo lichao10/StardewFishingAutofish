@@ -60,8 +60,8 @@ tasks.register('verifyDistribution') {
     doLast {
         new java.util.zip.ZipFile(releaseFile.get().asFile).withCloseable { zip ->
             def names = zip.entries().collect { it.name }
-            def metadata = loader == 'forge' ? 'META-INF/mods.toml' : 'META-INF/neoforge.mods.toml'
-            def other = loader == 'forge' ? 'META-INF/neoforge.mods.toml' : 'META-INF/mods.toml'
+            def metadata = api == 'forge' ? 'META-INF/mods.toml' : 'META-INF/neoforge.mods.toml'
+            def other = api == 'forge' ? 'META-INF/neoforge.mods.toml' : 'META-INF/mods.toml'
             if (!names.contains(metadata) || names.contains(other)) throw new GradleException('Mixed loader metadata')
             def toml = zip.getInputStream(zip.getEntry(metadata)).getText('UTF-8')
             if (!toml.contains('modId="' + mod_id + '"') || toml.contains('${') || toml.contains('sunlit_autofish')) {
@@ -76,7 +76,7 @@ tasks.register('verifyDistribution') {
             if (!java.util.Arrays.equals(expectedIcon, zip.getInputStream(logo).bytes)) {
                 throw new GradleException('Packaged icon differs from the supplied asset')
             }
-            if (names.any { it.contains('sunlit_autofish') || it.contains('ClientSmoke') || it.contains('SmokeProbe') || it.startsWith('net/minecraft/') || it.startsWith('com/bonker/') }) {
+            if (names.any { (it.contains('sunlit_autofish') || it.startsWith('assets/stardewfishingautofish/') || it == 'stardewfishingautofish.mixins.json') || it.contains('ClientSmoke') || it.contains('SmokeProbe') || it.startsWith('net/minecraft/') || it.startsWith('com/bonker/') }) {
                 throw new GradleException('Old namespace or dependency/test classes leaked into JAR')
             }
             ['en_us','zh_cn'].each { lang ->
@@ -89,7 +89,14 @@ tasks.register('verifyDistribution') {
             def mixin = zip.getEntry("${mod_id}.mixins.json")
             if (mixin == null) throw new GradleException('Missing Mixin config')
             def config = new groovy.json.JsonSlurper().parse(zip.getInputStream(mixin))
-            if (loader == 'forge' && zip.getEntry(config.refmap) == null) throw new GradleException('Missing Forge refmap')
+            if (loader == 'neoforge' && api == 'forge') {
+                ['LegacyStardewResourceMixin', 'LegacyLegendaryResourceMixin', 'LegacyOptionalLootResourceMixin', 'LegacyDatapackSyncMixin'].each { bridge ->
+                    if (!config.client.contains(bridge) || zip.getEntry(config.package.replace('.', '/') + '/' + bridge + '.class') == null) {
+                        throw new GradleException('Missing NeoForge 1.20.1 upstream compatibility bridge: ' + bridge)
+                    }
+                }
+            }
+            if (api == 'forge' && zip.getEntry(config.refmap) == null) throw new GradleException('Missing Forge refmap')
             def identity = zip.getInputStream(zip.getEntry('io/github/lichao10/stardewfishingautofish/ModIdentity.class')).bytes
             if (!new String(identity, java.nio.charset.StandardCharsets.ISO_8859_1).contains(mod_id)) {
                 throw new GradleException('Wrong runtime MOD ID')

@@ -139,8 +139,10 @@ public final class WorldSmokeProbe {
             if (enabled()) toggle(mc);
             mc.options.pauseOnLostFocus = originalPause;
             if (mc.level != null) mc.level.disconnect();
-            String method = target.startsWith("Forge") ? "clearLevel" : "disconnect";
-            mc.getClass().getMethod(method, Screen.class).invoke(mc, new TitleScreen());
+            java.lang.reflect.Method disconnect;
+            try { disconnect = mc.getClass().getMethod("clearLevel", Screen.class); }
+            catch (NoSuchMethodException missing) { disconnect = mc.getClass().getMethod("disconnect", Screen.class); }
+            disconnect.invoke(mc, new TitleScreen());
         } catch (Exception error) { LogUtils.getLogger().warn("Smoke shutdown", error); }
         mc.stop();
     }

@@ -35,9 +35,12 @@ sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 tasks.named('test') { useJUnitPlatform() }
 tasks.named('processResources', ProcessResources) {
-    def values = [mod_id: mod_id, mod_version: mod_version, mod_authors: mod_authors,
-                  minecraft_version: minecraft_version, loader_version: loader_version,
-                  stardew_fishing_version: stardew_fishing_version]
+    def values = rootProject.expandProps + [
+        minecraft_version: minecraft_version,
+        loader_version: loader_version,
+        java_version: java_version,
+        stardew_fishing_version: stardew_fishing_version
+    ]
     inputs.properties values
     filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) { expand values }
 }
@@ -49,8 +52,8 @@ tasks.withType(AbstractArchiveTask).configureEach {
 tasks.named('jar', Jar) {
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('THIRD_PARTY_NOTICES.md')) { into 'META-INF' }
-    manifest.attributes('Implementation-Title': 'Stardew Fishing Autofish',
-            'Implementation-Version': project.version, 'Implementation-Vendor': mod_authors)
+    manifest.attributes('Implementation-Title': mod_name,
+            'Implementation-Version': project.version, 'Implementation-Vendor': mod_author)
 }
 idea.module { downloadSources = true; downloadJavadoc = true }
 tasks.register('verifyPinnedDependency') {

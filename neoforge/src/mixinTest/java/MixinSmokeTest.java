@@ -9,7 +9,7 @@ public class MixinSmokeTest {
     public static void main(String[] args) throws Exception {
         MixinBootstrap.init();
         MixinEnvironment.getDefaultEnvironment().setSide(MixinEnvironment.Side.CLIENT);
-        Mixins.addConfiguration("stardewfishingautofish.mixins.json");
+        Mixins.addConfiguration("stardew_fishing_autofish.mixins.json");
         HeadlessMixinService service = (HeadlessMixinService) MixinService.getService();
         String target = "net.minecraft.world.entity.projectile.FishingHook";
         ClassNode node = service.getClassNode(target);
@@ -19,7 +19,7 @@ public class MixinSmokeTest {
             throw new AssertionError("Accessor interface missing");
         int reads = 0;
         for (MethodNode method : node.methods) {
-            if (method.name.equals("stardewfishingautofish$isBiting") && method.desc.equals("()Z")) {
+            if (method.name.equals("stardew_fishing_autofish$isBiting") && method.desc.equals("()Z")) {
                 for (AbstractInsnNode insn : method.instructions) {
                     if (insn instanceof FieldInsnNode field && field.getOpcode() == Opcodes.GETFIELD
                             && field.name.equals("biting") && field.desc.equals("Z")) reads++;

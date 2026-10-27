@@ -19,7 +19,7 @@ public abstract class AquaBobberRendererMixin {
     @Inject(method = "render(Lcom/teammetallurgy/aquaculture/entity/AquaFishingBobberEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V", ordinal = 1, remap = true),
             require = 1, remap = false)
-    private void stardewfishingautofish$endFishingLine(@Coerce Object bobber, float yaw, float partialTick,
+    private void stardew_fishing_autofish$endFishingLine(@Coerce Object bobber, float yaw, float partialTick,
             PoseStack pose, MultiBufferSource buffers, int light, CallbackInfo ci) {
         if (!ModList.get().isLoaded("oculus")) return;
         // Zero-normal separator is also used by Oculus's MixinFishingHookRenderer.

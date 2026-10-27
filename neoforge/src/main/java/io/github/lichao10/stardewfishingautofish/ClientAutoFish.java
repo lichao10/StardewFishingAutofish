@@ -43,8 +43,8 @@ public final class ClientAutoFish {
     public static final class Registration {
         @SubscribeEvent
         public static void register(RegisterKeyMappingsEvent event) {
-            toggle = new KeyMapping("key.stardewfishingautofish.toggle", KeyConflictContext.UNIVERSAL,
-                    InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.stardewfishingautofish");
+            toggle = new KeyMapping("key.stardew_fishing_autofish.toggle", KeyConflictContext.UNIVERSAL,
+                    InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.stardew_fishing_autofish");
             event.register(toggle);
         }
     }
@@ -70,9 +70,9 @@ public final class ClientAutoFish {
 
     private static void toggle(Minecraft mc) {
         if (mc.player == null || mc.level == null) return;
-        if (enabled) { stop(mc, "message.stardewfishingautofish.off"); return; }
+        if (enabled) { stop(mc, "message.stardew_fishing_autofish.off"); return; }
         if (ItemUtils.getRodHand(mc.player) == null) {
-            message(mc, "message.stardewfishingautofish.need_rod");
+            message(mc, "message.stardew_fishing_autofish.need_rod");
             return;
         }
         try {
@@ -84,7 +84,7 @@ public final class ClientAutoFish {
             observedHook = null;
             reeledThisBite = false;
             treasureController = new TreasureController();
-            message(mc, "message.stardewfishingautofish.on", toggle.getTranslatedKeyMessage());
+            message(mc, "message.stardew_fishing_autofish.on", toggle.getTranslatedKeyMessage());
         } catch (ReflectiveOperationException | RuntimeException error) {
             fail(mc, error);
         }
@@ -99,7 +99,7 @@ public final class ClientAutoFish {
             return;
         }
         if (!mc.player.isAlive() || mc.player.isSpectator()) { // alive / spectator
-            stop(mc, "message.stardewfishingautofish.off");
+            stop(mc, "message.stardew_fishing_autofish.off");
             return;
         }
         try {
@@ -126,10 +126,10 @@ public final class ClientAutoFish {
             if (mc.screen != null || mc.isPaused()) return;
             if (cooldown > 0) { cooldown--; return; }
             InteractionHand hand = ItemUtils.getRodHand(mc.player);
-            if (hand == null) { stop(mc, "message.stardewfishingautofish.need_rod"); return; }
+            if (hand == null) { stop(mc, "message.stardew_fishing_autofish.need_rod"); return; }
             ItemStack rod = mc.player.getItemInHand(hand);
             if (rod.isDamageableItem() && rod.getMaxDamage() - rod.getDamageValue() <= 1) {
-                stop(mc, "message.stardewfishingautofish.low_durability");
+                stop(mc, "message.stardew_fishing_autofish.low_durability");
                 return;
             }
             FishingHook hook = mc.player.fishing;
@@ -200,7 +200,7 @@ public final class ClientAutoFish {
     }
 
     private static void fail(Minecraft mc, Exception error) {
-        stop(mc, "message.stardewfishingautofish.error");
+        stop(mc, "message.stardew_fishing_autofish.error");
         LogUtils.getLogger().error("Stardew Fishing Autofish disabled after compatibility error", error);
     }
 
@@ -211,7 +211,7 @@ public final class ClientAutoFish {
     private static void overlay(GuiGraphics graphics) {
         if (!enabled) return;
         Minecraft mc = Minecraft.getInstance();
-        graphics.drawString(mc.font, Component.translatable("hud.stardewfishingautofish.on",
+        graphics.drawString(mc.font, Component.translatable("hud.stardew_fishing_autofish.on",
                 toggle.getTranslatedKeyMessage()), 6, 6, 0x66FF99);
     }
 

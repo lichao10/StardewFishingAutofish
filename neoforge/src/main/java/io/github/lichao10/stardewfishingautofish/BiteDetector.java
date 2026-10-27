@@ -32,6 +32,6 @@ public final class BiteDetector {
 
     public static boolean isBiting(FishingHook hook) throws IllegalAccessException {
         Field flag = FLAGS.get(hook.getClass());
-        return flag != null ? flag.getBoolean(hook) : ((FishingHookAccessor) hook).stardewfishingautofish$isBiting();
+        return flag != null ? flag.getBoolean(hook) : ((FishingHookAccessor) hook).stardew_fishing_autofish$isBiting();
     }
 }

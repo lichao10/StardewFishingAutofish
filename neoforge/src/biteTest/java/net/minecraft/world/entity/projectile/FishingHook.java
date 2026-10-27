@@ -4,5 +4,5 @@ import io.github.lichao10.stardewfishingautofish.mixin.FishingHookAccessor;
 public class FishingHook implements FishingHookAccessor {
     private boolean biting;
     public void setVanilla(boolean value) { biting = value; }
-    public boolean stardewfishingautofish$isBiting() { return biting; }
+    public boolean stardew_fishing_autofish$isBiting() { return biting; }
 }
