@@ -3,7 +3,7 @@ package io.github.lichao10.stardewfishingautofish;
 import java.util.Arrays;
 import java.util.Comparator;
 
-/** Chooses only the next held/released input; never changes minigame state. */
+/** Plans the next held or released input. */
 public final class BarController {
     private static final double ACCELERATION = (double) 0.7f;
     private static final int HORIZON = 12;
@@ -86,12 +86,11 @@ public final class BarController {
                             * (4 * miss * miss + 0.035 * error * error
                             + 0.12 * relativeSpeed * relativeSpeed);
                     if (treasurePending) {
-                        // Fish must survive, and may only finish after the chest is charged.
+                        // Collect the chest before completing the fish.
                         if (newPoints <= 0) cost += 10_000_000;
                         if (newPoints >= 120 && newChest < 30) cost += 10_000_000;
                         if (targetChest) cost -= 12 * (newChest - node.chestTicks);
-                        // Finishing must dominate the subsequent change of tracking target;
-                        // otherwise receding-horizon planning can hover just short of full.
+                        // Prioritize completion to avoid stalling just below full progress.
                         if (seekChest && node.chestTicks < 30 && newChest >= 30) cost -= 1_000_000;
                     }
                     next[index++] = new Node(p, v, cost, step == 0 ? held : node.first,

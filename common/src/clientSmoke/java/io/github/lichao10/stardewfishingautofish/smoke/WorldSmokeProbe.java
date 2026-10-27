@@ -19,7 +19,7 @@ import net.minecraft.world.level.*;
 import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 
-/** Full local single-player flow, driven through game APIs instead of OS input. */
+/** Single-player fishing integration checks. */
 public final class WorldSmokeProbe {
     private static int stage, ticks, games;
     private static long started;
@@ -107,7 +107,7 @@ public final class WorldSmokeProbe {
                 if (mc.player.fishing != menuHook) throw new AssertionError("Rod action continued while inventory was open");
                 mc.setScreen(null); toggle(mc);
                 if (enabled() || mc.options.pauseOnLostFocus != originalPause) throw new AssertionError("Toggle did not restore pause setting");
-                // Keep the unattended test running between disable/re-enable assertions.
+                // Continue ticking between toggle assertions.
                 mc.options.pauseOnLostFocus = false;
                 var server = mc.getSingleplayerServer(); var id = mc.player.getUUID();
                 server.execute(() -> {

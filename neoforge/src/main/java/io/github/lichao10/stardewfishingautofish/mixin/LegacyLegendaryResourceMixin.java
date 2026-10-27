@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-/** Keep the same namespace/path validation while using the legacy constructor. */
+/** Resource location construction for NeoForge 1.20.1. */
 @Mixin(targets = "com.bonker.stardewfishing.server.data.LegendaryFishModifier", remap = false)
 public abstract class LegacyLegendaryResourceMixin {
     @Redirect(method = "<clinit>", at = @At(value = "INVOKE", remap = false,

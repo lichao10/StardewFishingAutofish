@@ -31,10 +31,10 @@ tasks.register('prepareSimulation') {
 }
 tasks.register('simulationTest', JavaExec) {
     group = 'verification'
-    description = 'Run 1000 seeded games using this target\'s actual upstream bytecode.'
+    description = 'Run 1000 seeded fishing simulations.'
     dependsOn 'simulationClasses', 'prepareSimulation'
     classpath = files(sourceSets.simulation.output, sourceSets.main.runtimeClasspath)
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
     mainClass = 'TreasureIntegrationTest'
     maxHeapSize = '512m'
     args behaviorFile.get().asFile.absolutePath,
@@ -45,12 +45,12 @@ tasks.register('biteRegressionTest', JavaExec) {
     group = 'verification'
     dependsOn 'biteTestClasses'
     classpath = files(sourceSets.biteTest.output, sourceSets.main.runtimeClasspath)
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version) }
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
     mainClass = 'BiteRegressionTest'
 }
 tasks.named('check') { dependsOn 'simulationTest', 'biteRegressionTest', 'verifyDistribution' }
 
-// Inspect packaged outputs to catch namespace, bytecode and loader contamination.
+// Distribution checks.
 tasks.register('verifyDistribution') {
     group = 'verification'
     // LegacyForge's jar task creates a development JAR; reobfJar/assemble creates libs/.
@@ -60,8 +60,8 @@ tasks.register('verifyDistribution') {
     doLast {
         new java.util.zip.ZipFile(releaseFile.get().asFile).withCloseable { zip ->
             def names = zip.entries().collect { it.name }
-            def metadata = api == 'forge' ? 'META-INF/mods.toml' : 'META-INF/neoforge.mods.toml'
-            def other = api == 'forge' ? 'META-INF/neoforge.mods.toml' : 'META-INF/mods.toml'
+            def metadata = 'META-INF/mods.toml'
+            def other = 'META-INF/neoforge.mods.toml'
             if (!names.contains(metadata) || names.contains(other)) throw new GradleException('Mixed loader metadata')
             def toml = zip.getInputStream(zip.getEntry(metadata)).getText('UTF-8')
             if (!toml.contains('modId="' + mod_id + '"') || toml.contains('${') || toml.contains('sunlit_autofish')) {
@@ -89,14 +89,14 @@ tasks.register('verifyDistribution') {
             def mixin = zip.getEntry("${mod_id}.mixins.json")
             if (mixin == null) throw new GradleException('Missing Mixin config')
             def config = new groovy.json.JsonSlurper().parse(zip.getInputStream(mixin))
-            if (loader == 'neoforge' && api == 'forge') {
+            if (project.name == 'neoforge') {
                 ['LegacyStardewResourceMixin', 'LegacyLegendaryResourceMixin', 'LegacyOptionalLootResourceMixin', 'LegacyDatapackSyncMixin'].each { bridge ->
                     if (!config.client.contains(bridge) || zip.getEntry(config.package.replace('.', '/') + '/' + bridge + '.class') == null) {
                         throw new GradleException('Missing NeoForge 1.20.1 upstream compatibility bridge: ' + bridge)
                     }
                 }
             }
-            if (api == 'forge' && zip.getEntry(config.refmap) == null) throw new GradleException('Missing Forge refmap')
+            if (zip.getEntry(config.refmap) == null) throw new GradleException('Missing Forge refmap')
             def identity = zip.getInputStream(zip.getEntry('io/github/lichao10/stardewfishingautofish/ModIdentity.class')).bytes
             if (!new String(identity, java.nio.charset.StandardCharsets.ISO_8859_1).contains(mod_id)) {
                 throw new GradleException('Wrong runtime MOD ID')
@@ -104,7 +104,7 @@ tasks.register('verifyDistribution') {
             names.findAll { it.endsWith('.class') }.each { name ->
                 def stream = new DataInputStream(zip.getInputStream(zip.getEntry(name)))
                 stream.readInt(); stream.readUnsignedShort()
-                if (stream.readUnsignedShort() != java_version + 44) throw new GradleException("Wrong Java target: ${name}")
+                if (stream.readUnsignedShort() != java_version.toInteger() + 44) throw new GradleException("Wrong Java target: ${name}")
                 stream.close()
             }
         }

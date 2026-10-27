@@ -1,12 +1,10 @@
 plugins {
     id 'base'
-    id 'net.neoforged.moddev' version '2.0.148' apply false
     id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
 }
 group = providers.gradleProperty('group').get()
 version = providers.gradleProperty('version').get()
 
-// Shared mod metadata. Target-specific values are added by the loader convention.
 ext.expandProps = [
     version: project.version.toString(),
     group: project.group.toString(),
@@ -16,52 +14,40 @@ ext.expandProps = [
     license: providers.gradleProperty('license').get(),
     description: providers.gradleProperty('description').get(),
     java_version: providers.gradleProperty('java_version').get(),
-    gradle_java_version: providers.gradleProperty('gradle_java_version').get()
+    minecraft_version: minecraft_version,
+    minecraft_version_range: minecraft_version_range,
+    stardew_fishing_version: stardew_fishing_version
 ]
-def targets = new groovy.json.JsonSlurper().parse(file('targets.json'))
-ext.targetMatrix = targets
 if (!(mod_id ==~ /[a-z][a-z0-9_]{1,63}/)) throw new GradleException('Invalid mod_id')
 subprojects {
     group = rootProject.group
     version = rootProject.version
-    if (name != 'common') {
-        def selected = providers.gradleProperty('target').orNull
-        def target = targets.find { it.project == name && (selected != null ? it.id == selected : it.default) }
-        if (target == null) throw new GradleException("Unregistered target: ${name}")
-        ext.targetSpec = target
-        if (name == 'neoforge') layout.buildDirectory = file("build/${target.minecraft_version}")
-        target.findAll { key, value -> !(key in ['id', 'project', 'directory']) }.each { key, value ->
-            extensions.extraProperties.set(key, value)
-        }
-    }
 }
+
 tasks.register('verifyReleaseTag') {
     group = 'verification'
-    description = 'Check -PreleaseTag=v<VERSION>-mc<MC>-<LOADER> against -Ptarget.'
+    description = 'Check the release tag against the project version.'
     doLast {
         def tag = providers.gradleProperty('releaseTag').orNull
-        def selected = providers.gradleProperty('target').orNull
-        if (!tag || !selected) throw new GradleException('Pass both -PreleaseTag and -Ptarget')
-        def target = targets.find { it.id == selected }
-        if (!target || tag != "v${rootProject.version}-mc${target.minecraft_version}-${target.loader}") {
-            throw new GradleException("Release tag disagrees with version/target: ${tag}")
-        }
+        def tags = ['forge', 'neoforge'].collect { "v${rootProject.version}-mc${minecraft_version}-${it}".toString() }
+        if (!(tag in tags)) throw new GradleException("Invalid release tag '${tag}'; expected one of ${tags}")
     }
 }
+
 tasks.register('collectArtifacts', Sync) {
     group = 'distribution'
-    description = 'Collect verified install JARs under forge/ and neoforge/, with icon.png.'
+    description = 'Collect the Forge and NeoForge JARs and icon.'
     dependsOn subprojects.collect { it.tasks.named('build') }
     into layout.buildDirectory.dir('releases')
     subprojects.findAll { it.name != 'common' }.each { p ->
-        from(p.layout.buildDirectory.file("libs/StardewFishingAutofish-${p.minecraft_version}-${p.loader}-${p.version}.jar")) { into p.loader }
+        from(p.layout.buildDirectory.file("libs/StardewFishingAutofish-${minecraft_version}-${p.name}-${p.version}.jar")) { into p.name }
     }
     from("common/src/main/resources/assets/${mod_id}/icon.png")
 }
 
 tasks.register('publishLocal', Sync) {
     group = 'distribution'
-    description = 'Publish only forge/, neoforge/ and icon.png to the configured releaseDir.'
+    description = 'Copy the release files to releaseDir.'
     dependsOn 'collectArtifacts'
     def local = new Properties()
     def configFile = file('local.properties')
@@ -73,7 +59,7 @@ tasks.register('publishLocal', Sync) {
         def workspace = rootProject.projectDir.canonicalFile.toPath()
         if (output.toPath().nameCount < 2 || workspace.startsWith(output.toPath()) ||
                 output.toPath().startsWith(workspace)) {
-            throw new GradleException('releaseDir must be a dedicated folder outside the source workspace')
+            throw new GradleException('Invalid releaseDir: expected a dedicated folder outside the source workspace')
         }
         output
     }

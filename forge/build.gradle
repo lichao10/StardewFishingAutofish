@@ -5,7 +5,7 @@ plugins {
 project.pluginManager.apply('multiloader-client-smoke')
 legacyForge {
     enable {
-        forgeVersion = "${minecraft_version}-${loader_version}"
+        forgeVersion = "${minecraft_version}-${forge_version}"
         disableRecompilation = true
     }
     runs {
