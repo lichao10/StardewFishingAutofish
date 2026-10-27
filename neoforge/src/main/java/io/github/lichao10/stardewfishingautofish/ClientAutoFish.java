@@ -55,7 +55,7 @@ public final class ClientAutoFish {
     @SubscribeEvent
     public static void key(InputEvent.Key event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen == null && event.getAction() == GLFW.GLFW_PRESS
+        if (mc.gui.screen() == null && event.getAction() == GLFW.GLFW_PRESS
                 && toggle != null && toggle.isActiveAndMatches(InputConstants.getKey(event.getKeyEvent()))) {
             toggle(mc);
         }
@@ -106,7 +106,7 @@ public final class ClientAutoFish {
             return;
         }
         try {
-            if (mc.screen instanceof FishingScreen screen) {
+            if (mc.gui.screen() instanceof FishingScreen screen) {
                 if (controlledScreen != screen) treasureController = new TreasureController();
                 controlledScreen = screen;
                 cooldown = 20;
@@ -126,7 +126,7 @@ public final class ClientAutoFish {
             }
             releaseInput();
             // Pause while another screen is open.
-            if (mc.screen != null || mc.isPaused()) return;
+            if (mc.gui.screen() != null || mc.isPaused()) return;
             if (cooldown > 0) { cooldown--; return; }
             InteractionHand hand = ItemUtils.getRodHand(mc.player);
             if (hand == null) { stop(mc, "message.stardew_fishing_autofish.need_rod"); return; }

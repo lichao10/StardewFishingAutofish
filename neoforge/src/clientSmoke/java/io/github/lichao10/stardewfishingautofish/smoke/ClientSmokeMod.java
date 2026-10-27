@@ -13,7 +13,7 @@ public final class ClientSmokeMod {
     @EventBusSubscriber(modid = "autofish_smoke", value = Dist.CLIENT)
     public static final class Events {
         @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
-            ClientSmokeProbe.tick(ModList.get().isLoaded(StardewFishingAutofish.ID), "NeoForge 26.1.2");
+            ClientSmokeProbe.tick(ModList.get().isLoaded(StardewFishingAutofish.ID), "NeoForge 26.2");
         }
     }
 }

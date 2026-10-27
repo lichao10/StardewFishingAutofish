@@ -74,11 +74,11 @@ public final class WorldSmokeProbe {
         try {
             if (stage != loggedStage) {
                 LogUtils.getLogger().info("WORLD SMOKE stage {}; games {}; rewards {}; screen {}", stage,
-                        games, mc.player == null ? 0 : rewards(mc), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
+                        games, mc.player == null ? 0 : rewards(mc), mc.gui.screen() == null ? "none" : mc.gui.screen().getClass().getSimpleName());
                 loggedStage = stage;
             }
             if (System.currentTimeMillis() - started > 240_000) throw new AssertionError("World flow timeout at stage " + stage);
-            if (mc.level == null || mc.player == null || mc.screen != null && stage != 3 && stage != 4) return;
+            if (mc.level == null || mc.player == null || mc.gui.screen() != null && stage != 3 && stage != 4) return;
             ticks++;
             if (stage == 1 && ticks > 20) {
                 commands(mc, "fill -9 195 -3 9 195 19 minecraft:stone",
@@ -95,18 +95,18 @@ public final class WorldSmokeProbe {
                 LogUtils.getLogger().info("WORLD SMOKE automation enabled");
             } else if (stage == 3) {
                 if (mc.player.fishing != null) castSeen = true;
-                if (mc.screen instanceof FishingScreen screen) {
+                if (mc.gui.screen() instanceof FishingScreen screen) {
                     if (screen != previousGame) { previousGame = screen; games++; }
                     var status = FishingScreen.class.getDeclaredField("status"); status.setAccessible(true);
                     if (status.get(screen).toString().equals("MINIGAME")) minigameSeen = true;
                 }
-                if (games >= 2 && rewards(mc) >= 2 && !(mc.screen instanceof FishingScreen)) {
+                if (games >= 2 && rewards(mc) >= 2 && !(mc.gui.screen() instanceof FishingScreen)) {
                     menuHook = mc.player.fishing;
-                    mc.setScreen(new InventoryScreen(mc.player)); stage = 4; ticks = 0;
+                    mc.gui.setScreen(new InventoryScreen(mc.player)); stage = 4; ticks = 0;
                 }
             } else if (stage == 4 && ticks > 25) {
                 if (mc.player.fishing != menuHook) throw new AssertionError("Rod action continued while inventory was open");
-                mc.setScreen(null); toggle(mc);
+                mc.gui.setScreen(null); toggle(mc);
                 if (enabled() || mc.options.pauseOnLostFocus != originalPause) throw new AssertionError("Toggle did not restore pause setting");
                 // Continue ticking between toggle assertions.
                 mc.options.pauseOnLostFocus = false;

@@ -4,9 +4,11 @@
   "package": "io.github.lichao10.stardewfishingautofish.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "FishingHookAccessor"
+    "FishingHookAccessor",
+    "StardewClientEventsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "plugin": "io.github.lichao10.stardewfishingautofish.mixin.StardewMixinPlugin"
 }

@@ -68,7 +68,7 @@ tasks.register('verifyDistribution') {
             }
             def logoPath = "assets/${mod_id}/icon.png"
             def logo = zip.getEntry(logoPath)
-            if (!toml.contains('logoFile="' + logoPath + '"') || logo == null) {
+            if (!toml.contains('iconFile="' + logoPath + '"') || logo == null) {
                 throw new GradleException('Missing mod list icon or metadata reference')
             }
             def expectedIcon = rootProject.file("common/src/main/resources/${logoPath}").bytes

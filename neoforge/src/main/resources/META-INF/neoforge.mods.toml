@@ -6,7 +6,7 @@ issueTrackerURL="https://github.com/lichao10/StardewFishingAutofish/issues"
 modId="${mod_id}"
 version="${version}"
 displayName="星露谷自动钓鱼（${mod_name}）"
-logoFile="assets/${mod_id}/icon.png"
+iconFile="assets/${mod_id}/icon.png"
 authors="${mod_author}"
 displayURL="https://github.com/lichao10/StardewFishingAutofish"
 description='''${description}'''
@@ -15,7 +15,7 @@ config="${mod_id}.mixins.json"
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"
-versionRange="[${neoforge_version},26.2)"
+versionRange="[${neoforge_version},26.3)"
 ordering="NONE"
 side="CLIENT"
 [[dependencies.${mod_id}]]

@@ -17,14 +17,14 @@ public final class ClientSmokeProbe {
     public static void tick(boolean registered, String target) {
         Minecraft mc = Minecraft.getInstance();
         if (WorldSmokeProbe.active()) { WorldSmokeProbe.tick(mc); return; }
-        String screen = mc.screen == null ? "null" : mc.screen.getClass().getName();
+        String screen = mc.gui.screen() == null ? "null" : mc.gui.screen().getClass().getName();
         if (!screen.equals(observedScreen)) {
             LogUtils.getLogger().info("CLIENT SMOKE screen: {}", screen);
             observedScreen = screen;
         }
         // The first-run accessibility tutorial blocks the menu in a fresh test profile.
-        if (screen.endsWith("AccessibilityOnboardingScreen")) mc.setScreen(new TitleScreen());
-        if (finished || !(mc.screen instanceof TitleScreen) || ++titleTicks < 20) return;
+        if (screen.endsWith("AccessibilityOnboardingScreen")) mc.gui.setScreen(new TitleScreen());
+        if (finished || !(mc.gui.screen() instanceof TitleScreen) || ++titleTicks < 20) return;
         finished = true;
         try {
             if (!registered || !StardewFishingAutofish.ID.equals("stardew_fishing_autofish")) {
