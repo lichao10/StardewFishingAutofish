@@ -1,5 +1,5 @@
 {
-  "key.categories.stardew_fishing_autofish": "Stardew Fishing Autofish",
+  "key.category.stardew_fishing_autofish.general": "Stardew Fishing Autofish",
   "key.stardew_fishing_autofish.toggle": "Toggle automatic fishing",
   "message.stardew_fishing_autofish.on": "AutoFish enabled (%s to stop; rebind in Controls)",
   "message.stardew_fishing_autofish.off": "AutoFish disabled",

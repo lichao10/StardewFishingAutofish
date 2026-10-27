@@ -1,5 +1,5 @@
 {
-  "key.categories.stardew_fishing_autofish": "星露谷自动钓鱼",
+  "key.category.stardew_fishing_autofish.general": "星露谷自动钓鱼",
   "key.stardew_fishing_autofish.toggle": "开启 / 关闭自动钓鱼",
   "message.stardew_fishing_autofish.on": "自动钓鱼：已开启（%s 关闭，可在按键设置中修改）",
   "message.stardew_fishing_autofish.off": "自动钓鱼：已关闭",

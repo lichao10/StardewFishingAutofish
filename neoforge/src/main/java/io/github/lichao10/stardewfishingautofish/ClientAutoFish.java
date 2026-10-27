@@ -11,6 +11,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.ItemStack;
@@ -28,6 +29,7 @@ import org.lwjgl.glfw.GLFW;
 /** Client fishing automation. */
 @EventBusSubscriber(modid = StardewFishingAutofish.ID, value = Dist.CLIENT)
 public final class ClientAutoFish {
+    private static final KeyMapping.Category CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath(StardewFishingAutofish.ID, "general"));
     private static KeyMapping toggle;
     private static boolean enabled;
     private static Boolean savedPauseOnLostFocus;
@@ -44,7 +46,8 @@ public final class ClientAutoFish {
         @SubscribeEvent
         public static void register(RegisterKeyMappingsEvent event) {
             toggle = new KeyMapping("key.stardew_fishing_autofish.toggle", KeyConflictContext.UNIVERSAL,
-                    InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.stardew_fishing_autofish");
+                    InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, CATEGORY);
+            event.registerCategory(CATEGORY);
             event.register(toggle);
         }
     }
@@ -53,7 +56,7 @@ public final class ClientAutoFish {
     public static void key(InputEvent.Key event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen == null && event.getAction() == GLFW.GLFW_PRESS
-                && toggle != null && toggle.matches(event.getKey(), event.getScanCode())) {
+                && toggle != null && toggle.isActiveAndMatches(InputConstants.getKey(event.getKeyEvent()))) {
             toggle(mc);
         }
     }
@@ -62,7 +65,7 @@ public final class ClientAutoFish {
     public static void screenKey(ScreenEvent.KeyPressed.Pre event) {
         // Screen keys can be consumed before the global InputEvent.Key event.
         if (event.getScreen() instanceof FishingScreen && toggle != null
-                && toggle.matches(event.getKeyCode(), event.getScanCode())) {
+                && toggle.isActiveAndMatches(InputConstants.getKey(event.getKeyEvent()))) {
             toggle(Minecraft.getInstance());
             event.setCanceled(true);
         }
@@ -212,7 +215,7 @@ public final class ClientAutoFish {
         if (!enabled) return;
         Minecraft mc = Minecraft.getInstance();
         graphics.drawString(mc.font, Component.translatable("hud.stardew_fishing_autofish.on",
-                toggle.getTranslatedKeyMessage()), 6, 6, 0x66FF99);
+                toggle.getTranslatedKeyMessage()), 6, 6, 0xFF66FF99);
     }
 
     @SubscribeEvent

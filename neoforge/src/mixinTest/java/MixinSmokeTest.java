@@ -27,6 +27,6 @@ public class MixinSmokeTest {
             }
         }
         if (reads != 1) throw new AssertionError("Expected exactly one read of synchronized biting; got " + reads);
-        System.out.println("PASS: actual Minecraft 1.21.1 FishingHook accessor Mixin applied; reads biting exactly once.");
+        System.out.println("PASS: Minecraft " + System.getProperty("autofish.test.minecraft") + " FishingHook accessor Mixin applied; reads biting exactly once.");
     }
 }

@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Client startup checks. */
 public final class ClientSmokeProbe {
@@ -35,7 +35,7 @@ public final class ClientSmokeProbe {
                     .findFirst().orElseThrow(() -> new AssertionError("Toggle key not registered"));
             if (!key.getKey().getName().equals("key.keyboard.f8")) throw new AssertionError("Unexpected default key");
             var resource = mc.getResourceManager().getResource(
-                    ResourceLocation.tryParse("stardew_fishing_autofish:icon.png"))
+                    Identifier.tryParse("stardew_fishing_autofish:icon.png"))
                     .orElseThrow(() -> new AssertionError("Icon not available in active game resource manager"));
             try (var input = resource.open()) {
                 byte[] png = input.readAllBytes();

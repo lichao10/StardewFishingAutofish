@@ -12,7 +12,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.*;
@@ -35,9 +38,9 @@ public final class WorldSmokeProbe {
         originalPause = mc.options.pauseOnLostFocus;
         mc.options.pauseOnLostFocus = false;
         var settings = new LevelSettings("Autofish isolated smoke test", GameType.CREATIVE,
-                false, Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT);
+                false, Difficulty.PEACEFUL, true, new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
         var options = new WorldOptions(20261027L, false, false);
-        Function<RegistryAccess, WorldDimensions> dimensions = WorldPresets::createNormalWorldDimensions;
+        Function<HolderLookup.Provider, WorldDimensions> dimensions = WorldPresets::createNormalWorldDimensions;
         var flows = mc.createWorldOpenFlows();
         var create = Arrays.stream(flows.getClass().getMethods())
                 .filter(m -> m.getName().equals("createFreshLevel")).findFirst().orElseThrow();
@@ -138,11 +141,7 @@ public final class WorldSmokeProbe {
         try {
             if (enabled()) toggle(mc);
             mc.options.pauseOnLostFocus = originalPause;
-            if (mc.level != null) mc.level.disconnect();
-            java.lang.reflect.Method disconnect;
-            try { disconnect = mc.getClass().getMethod("clearLevel", Screen.class); }
-            catch (NoSuchMethodException missing) { disconnect = mc.getClass().getMethod("disconnect", Screen.class); }
-            disconnect.invoke(mc, new TitleScreen());
+            if (mc.level != null) mc.level.disconnect(Component.literal("Autofish test complete"));
         } catch (Exception error) { LogUtils.getLogger().warn("Smoke shutdown", error); }
         mc.stop();
     }
