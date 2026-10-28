@@ -29,14 +29,14 @@ tasks.register('verifyReleaseTag') {
     description = 'Check the release tag against the project version.'
     doLast {
         def tag = providers.gradleProperty('releaseTag').orNull
-        def tags = ['forge', 'neoforge'].collect { "v${rootProject.version}-mc${minecraft_version}-${it}".toString() }
+        def tags = ['forge'].collect { "v${rootProject.version}-mc${minecraft_version}-${it}".toString() }
         if (!(tag in tags)) throw new GradleException("Invalid release tag '${tag}'; expected one of ${tags}")
     }
 }
 
 tasks.register('collectArtifacts', Sync) {
     group = 'distribution'
-    description = 'Collect the Forge and NeoForge JARs and icon.'
+    description = 'Collect the Forge JAR and icon.'
     dependsOn subprojects.collect { it.tasks.named('build') }
     into layout.buildDirectory.dir('releases')
     subprojects.findAll { it.name != 'common' }.each { p ->
@@ -45,7 +45,7 @@ tasks.register('collectArtifacts', Sync) {
     from("common/src/main/resources/assets/${mod_id}/icon.png")
 }
 
-tasks.register('publishLocal', Sync) {
+tasks.register('publishLocal', Copy) {
     group = 'distribution'
     description = 'Copy the release files to releaseDir.'
     dependsOn 'collectArtifacts'

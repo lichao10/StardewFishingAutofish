@@ -7,6 +7,10 @@ java {
 }
 repositories {
     exclusiveContent {
+        forRepository { maven { name = 'CurseMaven'; url = 'https://www.cursemaven.com' } }
+        filter { includeGroup 'curse.maven' }
+    }
+    exclusiveContent {
         forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
         filter { includeGroup 'maven.modrinth' }
     }
@@ -25,7 +29,7 @@ sourceSets.test.java.srcDir(rootProject.file('common/src/platformTest/java'))
 tasks.named('compileJava') { dependsOn ':common:generateModIdentity' }
 tasks.named('sourcesJar') { dependsOn ':common:generateModIdentity' }
 dependencies {
-    upstreamArtifact "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}"
+    upstreamArtifact "curse.maven:stardew-fishing-1066037:${stardew_fishing_file_id}"
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

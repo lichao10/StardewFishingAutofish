@@ -17,7 +17,7 @@ tasks.register('prepareSimulation') {
         def jar = configurations.upstreamArtifact.singleFile
         new java.util.zip.ZipFile(jar).withCloseable { zip ->
             def data = new groovy.json.JsonSlurper().parse(zip.getInputStream(
-                    zip.getEntry('data/stardew_fishing/fish_behaviors.json')))
+                    zip.getEntry('data/stardew_fishing/data.json')))
             def seen = new LinkedHashMap()
             data.behaviors.each { name, p ->
                 def values = ['idle_time','top_speed','up_acceleration','down_acceleration','avg_distance','move_variation'].collect { p[it] }
@@ -35,10 +35,10 @@ tasks.register('simulationTest', JavaExec) {
     dependsOn 'simulationClasses', 'prepareSimulation'
     classpath = files(sourceSets.simulation.output, sourceSets.main.runtimeClasspath)
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
-    mainClass = 'TreasureIntegrationTest'
+    mainClass = 'LegacyIntegrationTest'
     maxHeapSize = '512m'
     args behaviorFile.get().asFile.absolutePath,
-            layout.buildDirectory.file('simulation/treasure-1000.csv').get().asFile.absolutePath,
+            layout.buildDirectory.file('simulation/legacy-1000.csv').get().asFile.absolutePath,
             providers.gradleProperty('simulationCases').getOrElse('')
 }
 tasks.register('biteRegressionTest', JavaExec) {
@@ -86,17 +86,6 @@ tasks.register('verifyDistribution') {
                     throw new GradleException('Old translation keys')
                 }
             }
-            def mixin = zip.getEntry("${mod_id}.mixins.json")
-            if (mixin == null) throw new GradleException('Missing Mixin config')
-            def config = new groovy.json.JsonSlurper().parse(zip.getInputStream(mixin))
-            if (project.name == 'neoforge') {
-                ['LegacyStardewResourceMixin', 'LegacyLegendaryResourceMixin', 'LegacyOptionalLootResourceMixin', 'LegacyDatapackSyncMixin'].each { bridge ->
-                    if (!config.client.contains(bridge) || zip.getEntry(config.package.replace('.', '/') + '/' + bridge + '.class') == null) {
-                        throw new GradleException('Missing NeoForge 1.20.1 upstream compatibility bridge: ' + bridge)
-                    }
-                }
-            }
-            if (zip.getEntry(config.refmap) == null) throw new GradleException('Missing Forge refmap')
             def identity = zip.getInputStream(zip.getEntry('io/github/lichao10/stardewfishingautofish/ModIdentity.class')).bytes
             if (!new String(identity, java.nio.charset.StandardCharsets.ISO_8859_1).contains(mod_id)) {
                 throw new GradleException('Wrong runtime MOD ID')

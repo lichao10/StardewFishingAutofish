@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Inspect actual upstream bytecode without initializing the game's signed/remapped classes. */
 class UpstreamContractTest {
     private static final String ROOT = "com/bonker/stardewfishing/";
     private record Members(Map<String, String> fields, Map<String, String> methods) {}
@@ -26,25 +25,26 @@ class UpstreamContractTest {
         }
         return new Members(fields, methods);
     }
-    @Test void pinnedMinigameHasControllerFields() throws Exception {
+    @Test void minigameContainsControllerState() throws Exception {
         var fields = read("client/FishingMinigame").fields();
         assertEquals("D", fields.get("bobberVelocity"));
         assertEquals("D", fields.get("fishVelocity"));
         assertEquals("I", fields.get("fishTarget"));
         assertEquals("Z", fields.get("fishIsIdle"));
-        assertEquals("Z", fields.get("hasTreasureBobber"));
-        assertEquals("L" + ROOT + "common/networking/S2CStartMinigamePacket;", fields.get("packet"));
+        assertEquals("L" + ROOT + "common/FishBehavior;", fields.get("behavior"));
     }
-    @Test void pinnedScreenHasExpectedInputAndState() throws Exception {
+    @Test void screenContainsInputAndState() throws Exception {
         var screen = read("client/FishingScreen");
         assertEquals("L" + ROOT + "client/FishingMinigame;", screen.fields().get("minigame"));
         assertEquals("L" + ROOT + "client/FishingScreen$Status;", screen.fields().get("status"));
-        assertTrue(screen.methods().containsKey("setInputDown(Z)V"));
+        assertEquals("Z", screen.fields().get("mouseDown"));
+        assertTrue(screen.methods().containsKey("setResult(ZD)V"));
     }
-    @Test void pinnedPacketContainsControllerParameters() throws Exception {
-        var methods = read("common/networking/S2CStartMinigamePacket").methods();
+    @Test void packetAndBehaviorContainFishingParameters() throws Exception {
+        assertTrue(read("common/networking/S2CStartMinigamePacket").methods().containsKey("behavior()L" + ROOT + "common/FishBehavior;"));
+        var methods = read("common/FishBehavior").methods();
         assertTrue(methods.containsKey("topSpeed()F"));
-        assertTrue(methods.containsKey("lineStrength()F"));
-        assertTrue(methods.containsKey("barSize()I"));
+        assertTrue(methods.containsKey("upAcceleration()F"));
+        assertTrue(methods.containsKey("downAcceleration()F"));
     }
 }

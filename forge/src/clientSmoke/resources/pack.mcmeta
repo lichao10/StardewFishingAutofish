@@ -1,1 +1,6 @@
-{"pack":{"pack_format":15,"description":"Test-only client smoke resources"}}
+{
+  "pack": {
+    "pack_format": 9,
+    "description": "Test-only client smoke resources"
+  }
+}

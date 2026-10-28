@@ -2,14 +2,14 @@ package io.github.lichao10.stardewfishingautofish;
 
 import com.bonker.stardewfishing.client.FishingMinigame;
 import com.bonker.stardewfishing.client.FishingScreen;
-import com.bonker.stardewfishing.common.networking.S2CStartMinigamePacket;
-import com.bonker.stardewfishing.proxy.ItemUtils;
+import com.bonker.stardewfishing.common.FishBehavior;
+import com.bonker.stardewfishing.common.FishingHookLogic;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
 import java.lang.reflect.Field;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.projectile.FishingHook;
@@ -35,9 +35,8 @@ public final class ClientAutoFish {
     private static FishingScreen controlledScreen;
     private static FishingHook observedHook;
     private static boolean reeledThisBite;
-    private static TreasureController treasureController = new TreasureController();
     private static Field minigameField, statusField, velocityField, fishVelocityField,
-            targetField, idleField, packetField, treasureBobberField;
+            targetField, idleField, behaviorField, inputField;
 
     @Mod.EventBusSubscriber(modid = StardewFishingAutofish.ID, value = Dist.CLIENT,
             bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -72,7 +71,7 @@ public final class ClientAutoFish {
     private static void toggle(Minecraft mc) {
         if (mc.player == null || mc.level == null) return;
         if (enabled) { stop(mc, "message.stardew_fishing_autofish.off"); return; }
-        if (ItemUtils.getRodHand(mc.player) == null) {
+        if (getRodHand(mc.player) == null) {
             message(mc, "message.stardew_fishing_autofish.need_rod");
             return;
         }
@@ -84,7 +83,6 @@ public final class ClientAutoFish {
             cooldown = 10;
             observedHook = null;
             reeledThisBite = false;
-            treasureController = new TreasureController();
             message(mc, "message.stardew_fishing_autofish.on", toggle.getTranslatedKeyMessage());
         } catch (ReflectiveOperationException | RuntimeException error) {
             fail(mc, error);
@@ -105,28 +103,24 @@ public final class ClientAutoFish {
         }
         try {
             if (mc.screen instanceof FishingScreen screen) {
-                if (controlledScreen != screen) treasureController = new TreasureController();
                 controlledScreen = screen;
                 cooldown = 20;
                 if (statusField.get(screen) == FishingScreen.Status.MINIGAME) {
                     FishingMinigame game = (FishingMinigame) minigameField.get(screen);
-                    S2CStartMinigamePacket packet = (S2CStartMinigamePacket) packetField.get(game);
-                    screen.setInputDown(treasureController.choose(game.getBobberPos(),
-                            velocityField.getDouble(game), game.getBarSize(), game.getFishPos(),
+                    FishBehavior behavior = (FishBehavior) behaviorField.get(game);
+                    inputField.setBoolean(screen, BarController.choose(game.getBobberPos(),
+                            velocityField.getDouble(game), 36, game.getFishPos(),
                             fishVelocityField.getDouble(game), targetField.getInt(game),
-                            idleField.getBoolean(game), packet.topSpeed(),
-                            packet.upAcceleration(), packet.downAcceleration(),
-                            game.isChestVisible(), game.gotChest(), game.getChestPos(),
-                            game.getChestProgress(), game.getProgress(), packet.lineStrength(),
-                            treasureBobberField.getBoolean(game)));
-                } else screen.setInputDown(false);
+                            idleField.getBoolean(game), behavior.topSpeed(),
+                            behavior.upAcceleration(), behavior.downAcceleration()));
+                } else inputField.setBoolean(screen, false);
                 return;
             }
             releaseInput();
             // Pause while another screen is open.
             if (mc.screen != null || mc.isPaused()) return;
             if (cooldown > 0) { cooldown--; return; }
-            InteractionHand hand = ItemUtils.getRodHand(mc.player);
+            InteractionHand hand = getRodHand(mc.player);
             if (hand == null) { stop(mc, "message.stardew_fishing_autofish.need_rod"); return; }
             ItemStack rod = mc.player.getItemInHand(hand);
             if (rod.isDamageableItem() && rod.getMaxDamage() - rod.getDamageValue() <= 1) {
@@ -155,6 +149,10 @@ public final class ClientAutoFish {
         }
     }
 
+    private static InteractionHand getRodHand(net.minecraft.world.entity.player.Player player) {
+        return FishingHookLogic.getRodHand(player);
+    }
+
     private static void useRod(Minecraft mc, InteractionHand hand) {
         // Use the rod through the vanilla interaction API.
         mc.gameMode.useItem(mc.player, hand);
@@ -169,8 +167,8 @@ public final class ClientAutoFish {
         fishVelocityField = field(FishingMinigame.class, "fishVelocity");
         targetField = field(FishingMinigame.class, "fishTarget");
         idleField = field(FishingMinigame.class, "fishIsIdle");
-        packetField = field(FishingMinigame.class, "packet");
-        treasureBobberField = field(FishingMinigame.class, "hasTreasureBobber");
+        behaviorField = field(FishingMinigame.class, "behavior");
+        inputField = field(FishingScreen.class, "mouseDown");
         minigameField = game;
     }
 
@@ -182,7 +180,8 @@ public final class ClientAutoFish {
 
     private static void releaseInput() {
         if (controlledScreen != null) {
-            controlledScreen.setInputDown(false);
+            try { inputField.setBoolean(controlledScreen, false); }
+            catch (IllegalAccessException error) { LogUtils.getLogger().error("Could not release fishing input", error); }
             controlledScreen = null;
         }
     }
@@ -209,18 +208,18 @@ public final class ClientAutoFish {
         if (mc.player != null) mc.player.displayClientMessage(Component.translatable(key, args), true);
     }
 
-    private static void overlay(GuiGraphics graphics) {
+    private static void overlay(PoseStack graphics) {
         if (!enabled) return;
         Minecraft mc = Minecraft.getInstance();
-        graphics.drawString(mc.font, Component.translatable("hud.stardew_fishing_autofish.on",
+        mc.font.drawShadow(graphics, Component.translatable("hud.stardew_fishing_autofish.on",
                 toggle.getTranslatedKeyMessage()), 6, 6, 0x66FF99);
     }
 
     @SubscribeEvent
-    public static void hud(RenderGuiEvent.Post event) { overlay(event.getGuiGraphics()); }
+    public static void hud(RenderGuiEvent.Post event) { overlay(event.getPoseStack()); }
 
     @SubscribeEvent
     public static void fishingHud(ScreenEvent.Render.Post event) {
-        if (event.getScreen() instanceof FishingScreen) overlay(event.getGuiGraphics());
+        if (event.getScreen() instanceof FishingScreen) overlay(event.getPoseStack());
     }
 }

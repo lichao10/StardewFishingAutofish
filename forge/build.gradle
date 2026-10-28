@@ -10,8 +10,9 @@ legacyForge {
     }
     runs {
         client {
-            client(); gameDirectory = file('run/client')
+            client(); gameDirectory = file(providers.gradleProperty('lavaSmoke').isPresent() ? 'run/lava' : 'run/client')
             if (providers.gradleProperty('clientSmokeWorld').isPresent()) systemProperty 'autofish.smoke.world', 'true'
+            if (providers.gradleProperty('lavaSmoke').isPresent()) systemProperty 'autofish.smoke.lava', 'true'
         }
     }
     mods {
@@ -21,12 +22,20 @@ legacyForge {
         }
     }
 }
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
+if (providers.gradleProperty('lavaSmoke').isPresent()) {
+    tasks.register('prepareLavaSmoke') {
+        doLast {
+            def config = file('run/lava/config/netherdepthsupgrade-common.toml')
+            config.parentFile.mkdirs()
+            config.text = 'fish_entities = false\n'
+        }
+    }
+    tasks.named('runClient') { dependsOn 'prepareLavaSmoke' }
 }
 dependencies {
-    modImplementation "maven.modrinth:stardew-fishing:${stardew_fishing_version_id}"
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    modImplementation "curse.maven:stardew-fishing-1066037:${stardew_fishing_file_id}"
+    if (providers.gradleProperty('lavaSmoke').isPresent()) {
+        modRuntimeOnly 'maven.modrinth:nether-depths-upgrade:pQxWZBvX'
+        modRuntimeOnly 'maven.modrinth:geckolib:lxzmD9V4'
+    }
 }
-tasks.named('jar', Jar) { manifest.attributes('MixinConfigs': "${mod_id}.mixins.json") }

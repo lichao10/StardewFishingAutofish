@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     branches: ['**']
-    tags: ['v*-mc*-forge', 'v*-mc*-neoforge']
+    tags: ['v*-mc*-forge']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -26,6 +26,6 @@ jobs:
         run: sh gradlew verifyReleaseTag -PreleaseTag=${{ github.ref_name }} --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: StardewFishingAutofish-1.20.1
+          name: StardewFishingAutofish-1.19.2
           path: build/releases/
           if-no-files-found: error

@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[47,48)"
+loaderVersion="[43,44)"
 license="MIT"
 [[mods]]
 modId="autofish_smoke"

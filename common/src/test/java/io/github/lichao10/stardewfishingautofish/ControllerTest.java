@@ -9,29 +9,4 @@ class ControllerTest {
         assertFalse(BarController.choose(106, 0, 36, 5, 0, 5, true, 1, .1, .1));
     }
 
-    @Test void chargedTreasureReturnsToNormalTracking() {
-        TreasureController controller = new TreasureController();
-        for (double position : new double[] {0, 40, 106}) {
-            boolean expected = BarController.choose(position, 0, 36, 80, 0, 80, true, 1, .1, .1);
-            assertEquals(expected, controller.choose(position, 0, 36, 80, 0, 80, true,
-                    1, .1, .1, true, true, 5, 1, .5, 1, false));
-        }
-    }
-
-    @Test void missingTreasureDoesNotChangeNormalTracking() {
-        TreasureController controller = new TreasureController();
-        for (double fish : new double[] {5, 60, 120}) {
-            boolean expected = BarController.choose(40, 0, 36, fish, 0, (int) fish,
-                    true, 1, .1, .1);
-            assertEquals(expected, controller.choose(40, 0, 36, fish, 0, (int) fish,
-                    true, 1, .1, .1, false, false, 5, 0, .5, 1, false));
-        }
-    }
-    @Test void wideBarLeavesFishBeforeTreasureWouldBeMissed() {
-        // 1.21.1 case 272: fish near the top, chest at 128, wide bar pinned at 94.
-        // Staying held would finish the fish six ticks before the chest charges.
-        TreasureController controller = new TreasureController();
-        assertFalse(controller.choose(94, 0, 48, 101.2, 0, 101, true,
-                4, .6, .6, true, false, 128, 5.0 / 30, 100.0 / 120, 0, false));
-    }
 }
